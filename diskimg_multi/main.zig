@@ -92,9 +92,7 @@ pub fn main() !u8 {
         .{parsed.inc},
     ));
     // hardcode most of the disc configuration:
-    // can't use 1 since
-    //      deltaThickness = (finalThickness - initThickness)/(numThickness-1);
-    try arglist.append("2");
+    try arglist.append("1");
     try arglist.append(try std.fmt.allocPrintZ(
         alloc,
         "{d}",
