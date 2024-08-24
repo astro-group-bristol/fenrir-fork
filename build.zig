@@ -2,14 +2,13 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
 
     const build_diskimg = b.step("diskimg", "Build diskimg executable");
 
     const diskimg = b.addExecutable(.{
         .name = "diskimg",
         .target = target,
-        .optimize = optimize,
+        .optimize = .ReleaseFast,
     });
     diskimg.linkLibCpp();
     diskimg.addIncludePath(b.path("diskimg"));
