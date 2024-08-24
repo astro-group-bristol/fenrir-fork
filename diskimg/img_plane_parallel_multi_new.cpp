@@ -24,9 +24,13 @@ namespace patch
     }
 }
 
+// declare main with C ABI
+extern "C" {
+    int diskimg_main(int argc, char* argv[]);
+}
 
-int main(int argc, char* argv[]){
-	
+int diskimg_main(int argc, char* argv[]){
+
 	//Getting total number of photons and rows/process from command line
 	//This divides the vertical dimension into parts, where each process does a certain number of rows
 	int n, totProcs, colPerProc, procNum;
@@ -34,26 +38,26 @@ int main(int argc, char* argv[]){
 	totProcs = atoi(argv[2]); //total number of processes
 	procNum = atoi(argv[3]); //index number of process (starts at 0)
 	colPerProc = n/totProcs;
-	
+
     //Getting the file prefix to the output files (there will a separate file for each mdot value)
     //outFilePrefix = argv[4]; //taking name as input from user
     //std::ofstream myfile; //opening i/o stream to output to 'myfile' named in ic file
     //myfile.open (outFileName); //, std::ios_base::app); //opening a new txt file 'myfile' named in ic file
-    
+
     //Physical parameters
     a = atof(argv[4]);//0.0;
 	inclination = acos(atof(argv[5]));//15.0;
-	
+
 	//Accretion parameters (initAcc > finalAcc)
 	numThickness = atoi(argv[6]);
 	initThickness = atof(argv[7]);
 	finalThickness = atof(argv[8]);
 	imgSize = atof(argv[9]);
 	outFilePrefix = argv[10];
-	
+
 	//Calculating the deltaAcc from the inputs
 	deltaThickness = (finalThickness - initThickness)/(numThickness-1);
-	
+
 	//Calculating radius of event horizon
 	rEvent = 1. + pow(1.-(a*a),0.5); //
 
@@ -69,21 +73,21 @@ int main(int argc, char* argv[]){
 
 	//Defining the minimum R cutoff (at which point, the photon will stop being traced)
 	rLimit = rEvent + horizonStop;  //minimum radial distance (currently r_horizon + 0.01) //
-	
+
 	//Setting up the initial photon position
 	initRadius = obsRadius; //radial position of observer
 	initPhi = obsPhi; //phi position of observer
 	initTheta = inclination; //theta position of observer (should equal inclination angle, alpha)
 	initTime = 0.; //initial time
-	
+
 	std::cout << "1\n";
 
 	//Initializing the array of output streams
 	std::ofstream outStreams[numThickness];
-	
+
 	//Initializing the array of stream names
 	//const char* outNames[numAcc];
-	
+
 	//Filling stream name array
 	//int fileIndex = 0;
 	//while (fileIndex < numAcc){
@@ -91,7 +95,7 @@ int main(int argc, char* argv[]){
 	//	fileIndex += 1;
 	//}
 	int fileIndex = 0;
-	
+
 	//Opening up each of the output streams by looping over output stream array outStreams
 	//int fileIndex = 0;
 	std::string fileName;
@@ -100,18 +104,18 @@ int main(int argc, char* argv[]){
 		outStreams[fileIndex].open(fileName.c_str());
 		fileIndex += 1;
 	}
-	
+
 	std::cout << "2\n";
-	
+
 	//Setting accretion rate to the initial accretion value (initAcc)
 	//accretion = initAcc;
-	
+
 	//Defining the front normalization term of the disk height equation (above the mid-plane)
 	//heightFrontTerm = 2.*(3./(2.*efficiency))*accretion; //Calculating the front term of the scale height equation //
-	
+
     //Looping over NxN image plane
     int j,k; //defining looping dummy variables. j is x variable. k is y variable
-    
+
     //Accretion rate dummy variable
     int thicknessIndex;
 
@@ -141,21 +145,21 @@ int main(int argc, char* argv[]){
             posVec[1] = initRadius; //spherical radius
             posVec[2] = initTheta; //vertical angle theta
             posVec[3] = initPhi; //horizontal angle phi
-            
+
 			//Starting the propagation loop, where I will write to a different file for each Mdot value
 			thicknessIndex = 0;
 			while (thicknessIndex < numThickness){
 				//Calculating the accretion rate
 				thickness = initThickness + (thicknessIndex*deltaThickness);
-				
+
 				//Calculating the scale height normalization term from the accretion rate
 				heightFrontTerm = thickness;//2.*(3./(2.*efficiency))*accretion;
-				
+
 				if (posVec[1]*cos(posVec[2]) > scaleHeightFnct(posVec[1],posVec[2])){
-				
+
             		//Propagate the photon from the observer to the disk
             		propagate(posVec,momVec,dStep,tolerance,maxStep,rLimit,rEvent,scaleHeightValue,rProjected);
-				
+
 				}
             	//Calculating the pseudo-cylindrical radius and the vertical height of the disk above the mid-plane
             	rProjected = posVec[1]*std::sin(posVec[2]); //pseudo-cylindrical radius
@@ -166,14 +170,14 @@ int main(int argc, char* argv[]){
 
             	//Calculating the disk's velocity 4-vector
 				diskVelocity(posVec, diskVelVec, scaleHeightValue, rProjected);
-			
+
             	//Calculating the final energy of the photon (E = -p*U, dotting photon 4-momentum with disk 4-velocity)
             	finalEnergy = (momOneForm[0]*diskVelVec[0]) + (momOneForm[1]*diskVelVec[1]) + (momOneForm[2]*diskVelVec[2]) + (momOneForm[3]*diskVelVec[3]);
             	finalEnergy = -1.*finalEnergy;
 
 				//Outputting data to 'myfile': x, y, g, final_t, final_r, final_theta, final_phi, disk_H, pseudo-cylindrical_r
             	outStreams[thicknessIndex] << imgX << " " << imgY << " " << (energy/finalEnergy) << " " << posVec[0] << " " << posVec[1] << " " << posVec[2] << " " << posVec[3] << " " << scaleHeightValue << " " << rProjected << "\n";
-				
+
 				//advancing the accretion index by 1
 				thicknessIndex += 1;
 			}
