@@ -3,8 +3,8 @@
 This is a fork of the `fenrir` source code maintained by members of the Astrophysics Group at the University of Bristol.
 
 Note:
-- The original source code is _entirely the property_ of Corbin Taylor, who retains all copyright.
-- Our modifications and wrapper scripts are licensed under GPL3.
+- The original source code was written by Corbin Taylor. The code was published under GPL3.
+- Our group is maintaining wrapper scripts and some modifications.
 - On parallelization: the parallelization is achieved by starting multiple processes of one of the executables. The workload is then split into `NUM_PROCS` batches, and a given process will only execute its batch and then terminate. In this fork, that means passing `--procs=NUM_PROCS --proc-index N` where `N` should be incremented for each launch.
 
 ## Building
